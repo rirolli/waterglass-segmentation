@@ -25,6 +25,7 @@ class ImagesDataset(Dataset):
         self.x_images = [e.replace("png","jpg") for e in common_images]
         self.y_images = common_images
 
+        # Check if not error
         if len(self.x_images) != len(self.y_images):
             raise Exception(f"The length of X ({len(self.x_images)}) does not match the length of Y ({len(self.y_images)}).")
 
@@ -35,16 +36,20 @@ class ImagesDataset(Dataset):
         return len(self.x_images)
 
     def __getitem__(self, index: int):
+        # Gets the paths
         x_path_joined = os.path.join(self.x_path, self.x_images[index])
         y_vessel_path_joined = os.path.join(self.y_vessel_path, self.y_images[index])
         y_filled_path_joined = os.path.join(self.y_filled_path, self.y_images[index])
 
+        # Gets the images
         sample_x = io.imread(x_path_joined)
         sample_y_vessel = io.imread(y_vessel_path_joined)
         sample_y_filled = io.imread(y_filled_path_joined)
 
+        # Create a unique multiclasses label image
         sample_y = self._mergeVesselFilledImages(vessel_img=sample_y_vessel, filled_img=sample_y_filled)
 
+        # transforms
         if self.transforms["x_transforms"] is not None:
             sample_x = self.transforms["x_transforms"](sample_x)
         if self.transforms["y_transforms"] is not None:
@@ -53,6 +58,7 @@ class ImagesDataset(Dataset):
         return sample_x, sample_y
 
     def _mergeVesselFilledImages(self, vessel_img, filled_img):
+        """Methods to unify the Filled and Vessel image."""
         merged_img = np.zeros(vessel_img.shape[0:2], np.float32)
         if vessel_img is not None:
             merged_img[vessel_img==1] = 1
